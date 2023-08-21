@@ -1,61 +1,42 @@
-def add_time(start, duration):
-    global period
-    hour=int(start.split(":")[0])
-    minutes=int(start.split(":")[1].split()[0])
-    d_hour=int(duration.split(":")[0])
-    d_minutes=int(duration.split(":")[1])
-    period=start.split(":")[1].split()[1]
-    t_hour=hour+d_hour
-    t_minutes=minutes+d_minutes
-  
-    def period_toggle(Count=0):
-      global period
-      if period == "PM" and Count==0:
-           period="AM (next day)"
-      elif period =="AM" or period=="AM (next day)" and Count==0:
-           period="PM"
-      elif period =="AM" or period=="AM (next day)" and Count!=0:
-           period="PM, ("+str(round(Count/2))+" days later)"
-      else:
-           period="AM ("+str(Count)+" days later)"
-     
-        
-    if t_hour<=12 and t_minutes<60:
-       new_hour=t_hour
-       new_minutes=t_minutes
-       if t_hour==12:
-          period_toggle()
-         
-    elif t_hour>12 and t_minutes>=60:
-       new_hour=t_hour+1
-       new_minutes=t_minutes -60
-       count=0
-       while(new_hour>12):
-         new_hour= new_hour-12
-         count=count+1
-         period_toggle()
-       if count>=2:
-         period_toggle(count)
+def add_time(start, duration, starting_day=None):
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     
-      
-    elif t_hour>12 and t_minutes<60:
-       new_hour=t_hour
-       new_minutes=t_minutes
-       count=0
-       while(new_hour>12):
-         new_hour= new_hour-12 
-         count=count+1
-         period_toggle()
-       if count>2:
-         period_toggle(count)
+    start_time, period = start.split()
+    start_hours, start_minutes = map(int, start_time.split(":"))
+    duration_hours, duration_minutes = map(int, duration.split(":"))
     
-    elif t_hour<12 and t_minutes>=60:
-       new_hour= t_hour+1
-       new_minutes=t_minutes-60
-       if new_hour==12:
-          period_toggle()  
-         
-    new_time= str(new_hour)+":"+str(new_minutes).rjust(2, '0')+" "+period
-    return new_time
+    total_minutes = start_hours * 60 + start_minutes + duration_hours * 60 + duration_minutes
+    days_later = total_minutes/(24 * 60)
+    if days_later>1:
+       days_later = round(days_later)
+    remaining_minutes = total_minutes % (24 * 60)
+    
+    new_hours = remaining_minutes // 60
+    new_minutes = remaining_minutes % 60
+    new_period = period
+    
+    if new_hours >= 12:
+        new_period = "PM" if period == "AM" else "AM"
+    
+    if new_hours == 0:
+        new_hours = 12
+    elif new_hours > 12:
+        new_hours -= 12
+    
+    result = f"{new_hours}:{new_minutes:02d} {new_period}"
+    
+    if starting_day:
+        starting_day_index = days_of_week.index(starting_day.capitalize())
+        new_day_index = (starting_day_index + int(days_later)) % 7
+        new_day = days_of_week[new_day_index]
+        result += f", {new_day}"
+    
+    if days_later == 1:
+        result += " (next day)"
+    elif days_later > 1:
+        result += f" ({days_later} days later)"
+    
+    return result
+
 
 print(add_time("11:06 PM", "2:02"))
